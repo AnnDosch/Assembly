@@ -1,0 +1,107 @@
+;Лабораторна робота 2. Дощич Г. Варіант 7
+.486 ;створюємо 32-бітний код
+.model flat, stdcall ; 32-розрядна модель пам'яті
+option casemap :none 
+include \masm32\include\windows.inc 
+include \masm32\macros\macros.asm ; Макроси підтримки MASM
+; включаємо файли, які мають прототипи формату MASM для викликів функцій
+include \masm32\include\masm32.inc
+include \masm32\include\gdi32.inc
+include \masm32\include\user32.inc
+include \masm32\include\kernel32.inc
+include \masm32\include\msvcrt.inc
+includelib \masm32\lib\msvcrt.lib
+includelib \masm32\lib\masm32.lib
+includelib \masm32\lib\gdi32.lib
+includelib \masm32\lib\user32.lib
+includelib \masm32\lib\kernel32.lib
+.data	; директива визначення даних
+_temp1 dd ?,0 ; визначте тимчасову змінну 1 з початковим значенням 0
+_temp2 dd ?,0 ; визначте тимчасову змінну 2 з початковим значенням 0
+_const1 dd 4 ; визначте константу 4
+_const2 dd 14 ; визначте константу 14
+_const3 dd 3 ; визначте константу 3
+_const4 dd 15 ; визначте константу 15
+_title db "Лабораторна робота №1. Виконання команд на розгалуження",0 ; заголовок вікна повідомлень
+strbuf dw ?,0 
+_text db "masm32.  Вивід результату через MessageBox:",0ah,
+"y=e/4b-d/14c   e > c",0ah,
+"y=d/3c-15ac  e <= c",0ah,
+"Результат: %d — ціла частина",0ah, 0ah,
+"Дощич Ганна КНЕУ  ФІСІТ",0 ; текст виведення вікна повідомлення
+MsgBoxCaption db "Приклад вікна повідомлення",0 ; Визначає рядок, який використовуватиметься як заголовок для вікна повідомлення.
+MsgBoxText_1 db "Умова e > c",0 ; Визначає рядок, який використовуватиметься як повідомлення для вікна повідомлення, якщо умова e > c виконується.
+MsgBoxText_2 db "Умова e <= c",0 ; Визначає рядок, який використовуватиметься як повідомлення для вікна повідомлення, якщо умова e > c хибна.
+
+.const 
+   NULL equ  0 ; визначення постійного символу з назвою NULL і встановлення його значення на 0.
+   MB_OK equ  0 ; визначення постійного символу з назвою  MB_OK і встановлення його значення на 0.
+
+.code ; Директива запуску командного сегмента
+_start:	; Початок програми
+ 
+main proc 
+LOCAL _a: DWORD ; локальна змінна _a
+LOCAL _b: DWORD ; локальна змінна _b
+LOCAL _c: DWORD ; локальна змінна _c
+LOCAL _d: DWORD ; локальна змінна _d
+LOCAL _e: DWORD ; локальна змінна _e
+
+mov _a, sval(input("Введіть a = ")) ; зберегти відповідь у локальній змінній _a
+mov _b, sval(input("Введіть b = ")) ; зберегти відповідь у локальній змінній _b
+mov _c, sval(input("Введіть c = ")) ; зберегти відповідь у локальній змінній _c
+mov _d, sval(input("Введіть d = ")) ; зберегти відповідь у локальній змінній _d
+mov _e, sval(input("Введіть e = ")) ; зберегти відповідь у локальній змінній _e
+ 
+mov ebx, _e ; Записуємо число _e в регістр ebx
+mov eax, _c ; Записуємо число _ в регістр eax
+sub ebx, eax   ; Порівнюємо  _e <= _c
+   
+jle zero
+
+; y = e/4b - d/14c, при e > c
+
+mov eax, _const1 ; 4
+mul _b ; 4*b
+mov ebx, eax ; зберігаємо eax в ebx
+mov eax, _e ; e
+div ebx ; e/(4*b)
+mov _temp1, eax ; зберігаємо eax в temp1
+mov eax, _d ; d
+mul _const2 ; 14
+mov ebx, eax ; зберігаємо eax в ebx
+mov eax, _c ; c
+mul _const2 ; 14c
+div ebx ; d/(14*c)
+sub _temp1, eax ; e/4b - d/14c
+
+invoke MessageBoxA, NULL, ADDR MsgBoxText_1, ADDR MsgBoxCaption, MB_OK ; відобразити вікно повідомлення
+invoke wsprintf, ADDR strbuf, ADDR _text, _temp1 ; форматувати рядок
+invoke MessageBox, NULL, ADDR strbuf, ADDR _title, MB_ICONINFORMATION ; відобразити вікно повідомлення
+invoke ExitProcess, 0 ; вийти з програми
+
+jmp lexit ; 
+zero:
+; y=d/3c-15ac    e <= c   
+mov eax, _const3 ;3
+mul _c ; 3*c
+mov ebx, eax ;зберігаємо eax в ebx
+mov eax, _d ;d
+div ebx ;d/3c
+mov _temp2, eax ;зберігаємо eax в temp2
+mov eax, _const4 ; 15
+mul _a ;15*a
+mul _c ;15*a*c
+sub _temp2, eax ; d/3c-15ac
+
+
+invoke MessageBoxA, NULL, ADDR MsgBoxText_2, ADDR MsgBoxCaption, MB_OK 
+invoke wsprintf, ADDR strbuf, ADDR _text, _temp2 
+invoke MessageBox, NULL, ADDR strbuf, ADDR _title, MB_ICONINFORMATION 
+invoke ExitProcess, 0 ; вихід з програми
+
+lexit:
+ ret
+main endp ; закінчення коду
+ ret ;
+end _start ; кінець програми
